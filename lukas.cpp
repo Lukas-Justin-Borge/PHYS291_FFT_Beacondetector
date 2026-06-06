@@ -1,85 +1,75 @@
-#include <iostream>
-#include <vector>
-#include "TFile.h"
+// moduleC_detector.C
+// Lukas — Module C: 5-Sigma Threat Detection with 0.4 Hz Noise Gating
+// Run with: root -l lukas.cpp
+
 #include "TH1D.h"
-#include "TF1.h"
-#include "TCanvas.h"
-
-using namespace std;
-
-void detect_beacons(TH1D *h)
-{
-    if (h == NULL) {
-        cout << "no histogram found" << endl;
-        return;
-    }
-
-    int bins = h->GetNbinsX();
-
-    // Definerer rekkevidden. Ignorerer bin 1 (0 Hz / DC-komponenten) 
-    // fordi den ekstreme toppen ødelegger skaleringen.
-    double start = h->GetBinLowEdge(2);
-    double end = h->GetBinLowEdge(bins + 1);
-
-    // TILPASNING AV STØY:
-    // Legger en flat linje ("pol0") over dataene for å finne 
-    // gjennomsnittlig bakgrunnsstøy ('m').
-    TF1 *fit = new TF1("fit", "pol0", start, end);
-    h->Fit(fit, "Q 0 R");
-    double m = fit->GetParameter(0); 
-
-    /*
-     * BEREGNING AV 5-SIGMA:
-     * Terskelen for et signal er: gjennomsnitt + (5 * standardavvik).
-     * Standardavviket ('sig') finnes ved å summere kvadrert avvik fra snittet,
-     * og dele på (bins - 1) for et godt estimat.
-     */
-    double sum = 0;
-    for (int i = 2; i <= bins; i++) {
-        double val = h->GetBinContent(i);
-        sum = sum + ((val - m) * (val - m)); 
-    }
-    
-    // Finner standardavviket og definerer terskelverdien 
-    double sig = sqrt(sum / (bins - 1));
-    double th = m + (5.0 * sig);
-
-    cout << "\n--- Lukas sin trusseldeteksjon ---" << endl;
-    cout << "Grensesnitt: " << th << " (5-Sigma)" << endl;
-
-    // SIGNALDETEKSJON:
-    // Alt som bryter 5-sigma-terskelen er nesten garantert et ekte signal, ikke støy.
-    for (int i = 2; i <= bins; i++) {
-        double c = h->GetBinContent(i);
-        if (c > th) {
-            cout << "[!] BEACON DETECTED at " << h->GetBinCenter(i) << " Hz" << endl;
-        }
-    }
-
-    // Tegner inn terskellinjen i rødt for William (Modul D)
-    TF1 *line = new TF1("line", "[0]", start, end);
-    line->SetParameter(0, th);
-    line->SetLineColor(2); 
-    h->GetListOfFunctions()->Add(line);
-}
-
+#include "TFile.h"
+#include <iostream>
+#include <cmath>
 
 void lukas()
 {
-    // Åpner fil og henter histogrammet fra August
-    TFile *f = new TFile("august.root");
-    TH1D *h = (TH1D*)f->Get("hFreq");
-    
-    if(!h) {
-        cout << "Error: Run Augusts script first!!" << endl;
+    // 1. Åpne Sages nylig genererte ROOT-fil
+    TFile *inFile = TFile::Open("august.root");
+    if (!inFile || inFile->IsZombie()) {
+        std::cout << "Error: Kunne ikke åpne august.root! Kjør august.cpp først.\n";
         return;
     }
 
-    // Kjører analysen
-    detect_beacons(h);
+    TH1D *hFreq = (TH1D*)inFile->Get("hFreq");
+    if (!hFreq) {
+        std::cout << "Error: Fant ikke histogrammet hFreq i filen.\n";
+        return;
+    }
 
-    // Tegner grafen (uten den stygge stat-boksen)
-    TCanvas *c1 = new TCanvas("c1", "Lukas' Detection Result", 800, 600);
-    h->SetStats(0); 
-    h->Draw("HIST"); 
+    int nBins = hFreq->GetNbinsX();
+
+    // 2. EKTE DYNAMISK 5-SIGMA BEREGNING
+    double sum = 0.0;
+    double sum_sq = 0.0;
+    int count = 0;
+
+    // Vi ignorerer alt under 0.4 Hz for å fjerne den massive surfestøyveggen fra snittet
+    for (int i = 1; i <= nBins; i++) {
+        double freq = hFreq->GetBinCenter(i);
+        if (freq >= 0.4) { 
+            double val = hFreq->GetBinContent(i);
+            sum += val;
+            sum_sq += val * val;
+            count++;
+        }
+    }
+
+    double mean = sum / count;
+    double variance = (sum_sq / count) - (mean * mean);
+    double sigma = std::sqrt(variance);
+
+    // Sett terskelen dynamisk til 5-Sigma over det nye, rene gjennomsnittet
+    double dynamic_threshold = mean + (5.0 * sigma);
+
+    std::cout << "\n--- LUKAS' THREAT DETECTION REPORT ---" << std::endl;
+    std::cout << "Dynamisk Terskel: " << dynamic_threshold << " (5-Sigma basert på støy)" << std::endl;
+
+    // 3. DETEKSJONSLOOP
+    bool detected = false;
+    for (int i = 1; i <= nBins; i++) {
+        double freq = hFreq->GetBinCenter(i);
+        double power = hFreq->GetBinContent(i);
+
+        // Skjær bort alt av lavfrekvent surfestøy (< 0.4 Hz)
+        if (freq < 0.4) continue;
+
+        // Sjekk om signalet skyter over 5-Sigma-veggen
+        if (power > dynamic_threshold) {
+            std::cout << "[!] BEACON DETECTED at " << freq << " Hz (Power: " << power << ")" << std::endl;
+            detected = true;
+        }
+    }
+
+    if (!detected) {
+        std::cout << "[*] Ingen mistenkelig beacon-trafikk detektert over støygrensen." << std::endl;
+    }
+    std::cout << "--------------------------------------\n" << std::endl;
+
+    inFile->Close();
 }

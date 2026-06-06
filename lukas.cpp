@@ -5,74 +5,81 @@
 #include "TF1.h"
 #include "TCanvas.h"
 
-// --- LUKAS' CORE MATH FUNCTION ---
-void DetectBeacons(TH1D *hFreq)
+using namespace std;
+
+void detect_beacons(TH1D *h)
 {
-    if (!hFreq)
+    if (h == NULL) {
+        cout << "no histogram found" << endl;
         return;
-
-    int nBins = hFreq->GetNbinsX();
-
-    // 1. Fit background (ignore bin 1/DC component)
-    double xMin = hFreq->GetBinLowEdge(2);
-    double xMax = hFreq->GetBinLowEdge(nBins + 1);
-
-    TF1 *bgFit = new TF1("bgFit", "pol0", xMin, xMax);
-    hFreq->Fit(bgFit, "Q 0 R");
-    double mean = bgFit->GetParameter(0);
-
-    // 2. Calculate 5-Sigma Threshold
-    double sumSq = 0;
-    for (int i = 2; i <= nBins; i++)
-    {
-        sumSq += pow(hFreq->GetBinContent(i) - mean, 2);
     }
-    double sigma = sqrt(sumSq / (nBins - 1));
-    double threshold = mean + (5.0 * sigma);
 
-    // 3. Detect Alarms
-    std::cout << "\n--- LUKAS' THREAT DETECTION REPORT ---" << std::endl;
-    std::cout << "Threshold: " << threshold << " (5-Sigma)" << std::endl;
+    int bins = h->GetNbinsX();
 
-    for (int i = 2; i <= nBins; i++)
-    {
-        if (hFreq->GetBinContent(i) > threshold)
-        {
-            std::cout << "[!] BEACON DETECTED at " << hFreq->GetBinCenter(i) << " Hz" << std::endl;
+    // Definerer rekkevidden. Ignorerer bin 1 (0 Hz / DC-komponenten) 
+    // fordi den ekstreme toppen ødelegger skaleringen.
+    double start = h->GetBinLowEdge(2);
+    double end = h->GetBinLowEdge(bins + 1);
+
+    // TILPASNING AV STØY:
+    // Legger en flat linje ("pol0") over dataene for å finne 
+    // gjennomsnittlig bakgrunnsstøy ('m').
+    TF1 *fit = new TF1("fit", "pol0", start, end);
+    h->Fit(fit, "Q 0 R");
+    double m = fit->GetParameter(0); 
+
+    /*
+     * BEREGNING AV 5-SIGMA:
+     * Terskelen for et signal er: gjennomsnitt + (5 * standardavvik).
+     * Standardavviket ('sig') finnes ved å summere kvadrert avvik fra snittet,
+     * og dele på (bins - 1) for et godt estimat.
+     */
+    double sum = 0;
+    for (int i = 2; i <= bins; i++) {
+        double val = h->GetBinContent(i);
+        sum = sum + ((val - m) * (val - m)); 
+    }
+    
+    // Finner standardavviket og definerer terskelverdien 
+    double sig = sqrt(sum / (bins - 1));
+    double th = m + (5.0 * sig);
+
+    cout << "\n--- Lukas sin trusseldeteksjon ---" << endl;
+    cout << "Grensesnitt: " << th << " (5-Sigma)" << endl;
+
+    // SIGNALDETEKSJON:
+    // Alt som bryter 5-sigma-terskelen er nesten garantert et ekte signal, ikke støy.
+    for (int i = 2; i <= bins; i++) {
+        double c = h->GetBinContent(i);
+        if (c > th) {
+            cout << "[!] BEACON DETECTED at " << h->GetBinCenter(i) << " Hz" << endl;
         }
     }
 
-    // 4. Visuals for William (Modul D)
-    TF1 *tLine = new TF1("tLine", "[0]", xMin, xMax);
-    tLine->SetParameter(0, threshold);
-    tLine->SetLineColor(kRed);
-    hFreq->GetListOfFunctions()->Add(tLine);
+    // Tegner inn terskellinjen i rødt for William (Modul D)
+    TF1 *line = new TF1("line", "[0]", start, end);
+    line->SetParameter(0, th);
+    line->SetLineColor(2); 
+    h->GetListOfFunctions()->Add(line);
 }
 
-// --- MAIN EXECUTION PART ---
+
 void lukas()
 {
-    // 1. Open August's output file
-    TFile *file = TFile::Open("august.root");
-    if (!file || file->IsZombie())
-    {
-        std::cout << "Error: Could not open august.root. Run August's script first!" << std::endl;
+    // Åpner fil og henter histogrammet fra August
+    TFile *f = new TFile("august.root");
+    TH1D *h = (TH1D*)f->Get("hFreq");
+    
+    if(!h) {
+        cout << "Error: Run Augusts script first!!" << endl;
         return;
     }
 
-    // 2. Get the Frequency Spectrum histogram from the file
-    TH1D *hFreq = (TH1D *)file->Get("hFreq");
-    if (!hFreq)
-    {
-        std::cout << "Error: Could not find histogram 'hFreq' in the file!" << std::endl;
-        return;
-    }
+    // Kjører analysen
+    detect_beacons(h);
 
-    // 3. Run the analysis
-    DetectBeacons(hFreq);
-
-    // 4. Draw result
-    TCanvas *cLukas = new TCanvas("cLukas", "Lukas' Detection Result", 800, 600);
-    hFreq->SetStats(0);
-    hFreq->Draw("HIST"); // Red threshold line will draw automatically
+    // Tegner grafen (uten den stygge stat-boksen)
+    TCanvas *c1 = new TCanvas("c1", "Lukas' Detection Result", 800, 600);
+    h->SetStats(0); 
+    h->Draw("HIST"); 
 }

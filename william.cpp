@@ -35,7 +35,7 @@ struct DetectionResult {
     std::vector<BeaconHit> hits;
 };
 
-DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.4)
+DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.05)
 {
     // Kjører samme deteksjonslogikk som Lukas: ignorer lavfrekvent støy
     // og beregn en dynamisk 5-sigma terskel fra resten av spekteret.
@@ -53,7 +53,7 @@ DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.4)
 
     for (int i = 1; i <= hFreq->GetNbinsX(); i++) {
         double frequency = hFreq->GetBinCenter(i);
-        if (frequency < noiseGateHz) {
+        if (frequency <= noiseGateHz) {
             continue;
         }
 
@@ -78,7 +78,7 @@ DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.4)
         double frequency = hFreq->GetBinCenter(i);
         double power = hFreq->GetBinContent(i);
 
-        if (frequency < noiseGateHz || power <= result.threshold) {
+        if (frequency <= noiseGateHz || power <= result.threshold) {
             continue;
         }
 

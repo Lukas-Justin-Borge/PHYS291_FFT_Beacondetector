@@ -29,10 +29,10 @@ void lukas()
     double sum_sq = 0.0;
     int count = 0;
 
-    // Vi ignorerer alt under 0.4 Hz for å fjerne den massive surfestøyveggen fra snittet
+    // Vi ignorerer alt under 0.05 Hz for å fjerne den massive surfestøyveggen fra snittet
     for (int i = 1; i <= nBins; i++) {
         double freq = hFreq->GetBinCenter(i);
-        if (freq >= 0.4) { 
+        if (freq >= 0.05) { 
             double val = hFreq->GetBinContent(i);
             sum += val;
             sum_sq += val * val;

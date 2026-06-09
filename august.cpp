@@ -26,10 +26,10 @@ void august()
 
     // Laster inn data (Leser de tre kolonnene fra Tshark)
     // SATT TIL SCENARIO 3 FOR Å TESTE DETEKSJON I STØY:
-    ifstream fin("scenario3_mixed_beacon.txt");
+    ifstream fin("datasett2_beacon.txt");
     if (!fin)
     {
-        cout << "Error: Kunne ikke åpne scenario3_mixed_beacon.txt!\n";
+        cout << "Error: Kunne ikke åpne datasett2_beacon.txt!\n";
         return;
     }
 

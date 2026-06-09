@@ -27,3 +27,6 @@ threat detection. All code in C++/ROOT.
 **Student(Lukas):** Ansvarlig for Statistisk Analyse og Terskeldeteksjon (Modul C)Fokus: Implementering av trusseldeteksjon basert på statistisk signifikans (Vi tenker 5sigma terskel), fiting av bakgrunnsstøy (TF1), og matematisk beregning av alarmbetingelser.
 
 **Student(William):** Ansvarlig for Systemintegrasjon, Visualisering og GUI (Modul D)Fokus: Design av det endelige kontrollpanelet (TCanvas med tids- og frekvensdomene synkronisert), teknisk dokumentasjon av kode-grensesnittene, og eventuell implementering av interaktive kontrollskivere (sliders).
+
+
+Når vi oppdager en beacon, ser vi at FFT-en også slår ut på de harmoniske frekvensene (multipler av grunnfrekvensen). Vi vurderte å filtrere ut disse i koden for å få en renere utskrift. Vi valgte imidlertid å ikke gjøre det, fordi det skaper en sårbarhet: En angriper kunne da ha gjemt en 2 Hz beacon i skyggen av en 1 Hz beacon, og detektoren vår ville ignorert den.

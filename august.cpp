@@ -25,10 +25,10 @@ void august()
 
     // Laster inn data (Leser de tre kolonnene fra Tshark)
     // SATT TIL SCENARIO 3 FOR Å TESTE DETEKSJON I STØY:
-    ifstream fin("datasett3_high_noise.txt");
+    ifstream fin("datasett4_multi.txt");
     if (!fin)
     {
-        cout << "Error: Kunne ikke åpne datasett3_high_noise.txt!\n";
+        cout << "Error: Kunne ikke åpne datasett4_multi.txt!\n";
         return;
     }
 

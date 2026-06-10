@@ -175,7 +175,7 @@ void william_lukas(const char *rootFileName = "august.root")
     hFreq->SetLineColor(kBlue + 2);
     hFreq->SetFillColorAlpha(kAzure + 2, 0.20);
     hFreq->SetTitle("Frequency spectrum with Lukas' gated detection threshold;Frequency [Hz];Power");
-    hFreq->GetXaxis()->SetRangeUser(0.4, hFreq->GetXaxis()->GetXmax());
+    hFreq->GetXaxis()->SetRangeUser(0.05, hFreq->GetXaxis()->GetXmax());
 
     // Kjører Lukas sin terskelmetode på histogrammet fra August.
     DetectionResult detection = run_lukas_detection_rule(hFreq);
@@ -207,7 +207,7 @@ void william_lukas(const char *rootFileName = "august.root")
     if (detection.threshold > 0.0)
     {
         // Tegner Lukas sin 5-sigma terskel som en rød linje.
-        thresholdLine = new TF1("lukas_threshold", "[0]", 0.4, hFreq->GetXaxis()->GetXmax());
+        thresholdLine = new TF1("lukas_threshold", "[0]", 0.05, hFreq->GetXaxis()->GetXmax());
         thresholdLine->SetParameter(0, detection.threshold);
         thresholdLine->SetLineColor(kRed + 1);
         thresholdLine->SetLineWidth(3);

@@ -123,7 +123,7 @@ void draw_status_text(const DetectionResult &detection)
     }
 }
 
-void william(const char *rootFileName = "august.root")
+void william_lukas(const char *rootFileName = "august.root")
 {
     gStyle->SetOptStat(0);
 

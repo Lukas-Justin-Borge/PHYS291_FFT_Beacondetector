@@ -16,8 +16,8 @@ using namespace std;
 void august()
 {
     // Parametere (Justert til Sages 3-minutters kjøring)
-    const double T_MAX = 180.0; // total observation window in seconds (3 min)
-    const int N_BINS = 1024;    // Beholdes som potens av 2 for histogrammet
+    const double T_MAX = 1800.0; // total observation window in seconds (3 min)
+    const int N_BINS = 8024;     // Beholdes som potens av 2 for histogrammet
     const double BIN_SIZE = T_MAX / N_BINS;
 
     // Histogram
@@ -26,10 +26,10 @@ void august()
 
     // Laster inn data (Leser de tre kolonnene fra Tshark)
     // SATT TIL SCENARIO 3 FOR Å TESTE DETEKSJON I STØY:
-    ifstream fin("datasett2_beacon.txt");
+    ifstream fin("datasett3_high_noise.txt");
     if (!fin)
     {
-        cout << "Error: Kunne ikke åpne datasett2_beacon.txt!\n";
+        cout << "Error: Kunne ikke åpne datasett3_high_noise.txt!\n";
         return;
     }
 
@@ -95,13 +95,4 @@ void august()
     hFreq->Write();
     outFile->Close();
     cout << "[Module B] Wrote hTime and hFreq to august.root\n";
-
-    // Visuell sjekk
-    TCanvas *c = new TCanvas("c", "Module B Preview", 1200, 500);
-    c->Divide(2, 1);
-    c->cd(1);
-    hTime->Draw();
-    c->cd(2);
-    hFreq->Draw();
-    c->SaveAs("august_preview.png");
 }

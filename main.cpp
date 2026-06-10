@@ -4,21 +4,21 @@
 #include "TROOT.h"
 #include <iostream>
 
+using namespace std; 
+
 int main()
 {
-    std::cout << "\n=========================================" << std::endl;
-    std::cout << "   PHYS291 - NETWORK BEACON DETECTOR     " << std::endl;
-    std::cout << "=========================================\n" << std::endl;
+    cout << "\n=========================================" << endl;
+    cout << "   PHYS291 - NETWORK BEACON DETECTOR     " << endl;
+    cout << "=========================================\n" << endl;
 
-    std::cout << ">>> STARTER MODUL B (AUGUST) <<<" << std::endl;
-    // Dette tilsvarer å skrive ".x august.cpp" i ROOT-terminalen
+    cout << ">>> STARTER MODUL B (AUGUST) <<<" << endl;
     gROOT->ProcessLine(".x august.cpp");
 
-    std::cout << "\n>>> STARTER MODUL C & D (WILLIAM / LUKAS) <<<" << std::endl;
-    // Kjører Williams dashboard (som inneholder Lukas sin deteksjonslogikk)
-    gROOT->ProcessLine(".x william.cpp");
+    cout << "\n>>> STARTER MODUL C & D (WILLIAM / LUKAS) <<<" << endl;
+    gROOT->ProcessLine(".x william_lukas.cpp");
 
-    std::cout << "\n=========================================" << std::endl;
-    std::cout << "Kjøring fullført! Sjekk william_dashboard.png" << std::endl;
-    std::cout << "=========================================\n" << std::endl;
+    cout << "\n=========================================" << endl;
+    cout << "Kjøring fullført! Sjekk william_dashboard.png" << endl;
+    cout << "=========================================\n" << endl;
 }

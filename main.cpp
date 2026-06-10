@@ -4,7 +4,7 @@
 #include "TROOT.h"
 #include <iostream>
 
-void run_all()
+int main()
 {
     std::cout << "\n=========================================" << std::endl;
     std::cout << "   PHYS291 - NETWORK BEACON DETECTOR     " << std::endl;

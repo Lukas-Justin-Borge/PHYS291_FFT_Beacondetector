@@ -17,7 +17,7 @@ void august()
 {
     // Parametere (Justert til Sages 3-minutters kjøring)
     const double T_MAX = 1800.0; // total observation window in seconds (3 min)
-    const int N_BINS = 8024;     // Beholdes som potens av 2 for histogrammet
+    const int N_BINS = 8192;     // Beholdes som potens av 2 for histogrammet
     const double BIN_SIZE = T_MAX / N_BINS;
 
     // Histogram

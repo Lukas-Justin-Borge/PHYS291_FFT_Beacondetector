@@ -21,8 +21,7 @@ void august()
     const double BIN_SIZE = T_MAX / N_BINS;
 
     // Histogram
-    TH1D *hTime = new TH1D("hTime", "Network Traffic (time domain);Time [s];Packet count",
-                           N_BINS, 0, T_MAX);
+    TH1D *hTime = new TH1D("hTime", "Network Traffic (time domain);Time [s];Packet count", N_BINS, 0, T_MAX);
 
     // Laster inn data (Leser de tre kolonnene fra Tshark)
     // SATT TIL SCENARIO 3 FOR Å TESTE DETEKSJON I STØY:

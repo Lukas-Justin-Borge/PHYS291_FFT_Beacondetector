@@ -23,16 +23,22 @@
 #include <iostream>
 #include <vector>
 
-struct BeaconHit {
+using std::cout;
+using std::sqrt;
+using std::vector;
+
+struct BeaconHit
+{
     double frequency;
     double power;
     double period;
 };
 
-struct DetectionResult {
+struct DetectionResult
+{
     double threshold;
     double noiseGateHz;
-    std::vector<BeaconHit> hits;
+    vector<BeaconHit> hits;
 };
 
 DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.05)
@@ -43,7 +49,8 @@ DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.05)
     result.threshold = -1.0;
     result.noiseGateHz = noiseGateHz;
 
-    if (!hFreq) {
+    if (!hFreq)
+    {
         return result;
     }
 
@@ -51,9 +58,11 @@ DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.05)
     double sumSq = 0.0;
     int count = 0;
 
-    for (int i = 1; i <= hFreq->GetNbinsX(); i++) {
+    for (int i = 1; i <= hFreq->GetNbinsX(); i++)
+    {
         double frequency = hFreq->GetBinCenter(i);
-        if (frequency <= noiseGateHz) {
+        if (frequency <= noiseGateHz)
+        {
             continue;
         }
 
@@ -63,22 +72,25 @@ DetectionResult run_lukas_detection_rule(TH1D *hFreq, double noiseGateHz = 0.05)
         count++;
     }
 
-    if (count == 0) {
+    if (count == 0)
+    {
         return result;
     }
 
     // Beregner gjennomsnitt og standardavvik for frekvensområdet over noise gate.
     double mean = sum / count;
     double variance = (sumSq / count) - (mean * mean);
-    double sigma = std::sqrt(variance);
+    double sigma = sqrt(variance);
     result.threshold = mean + (5.0 * sigma);
 
     // Samler alle frekvenstopper som bryter terskelen.
-    for (int i = 1; i <= hFreq->GetNbinsX(); i++) {
+    for (int i = 1; i <= hFreq->GetNbinsX(); i++)
+    {
         double frequency = hFreq->GetBinCenter(i);
         double power = hFreq->GetBinContent(i);
 
-        if (frequency <= noiseGateHz || power <= result.threshold) {
+        if (frequency <= noiseGateHz || power <= result.threshold)
+        {
             continue;
         }
 
@@ -99,7 +111,8 @@ void draw_status_text(const DetectionResult &detection)
     text.SetNDC();
     text.SetTextSize(0.035);
 
-    if (detection.hits.empty()) {
+    if (detection.hits.empty())
+    {
         text.SetTextColor(kGreen + 2);
         text.DrawLatex(0.13, 0.86, "No beacon above Lukas' gated 5-sigma threshold");
         text.SetTextColor(kBlack);
@@ -116,7 +129,8 @@ void draw_status_text(const DetectionResult &detection)
     text.DrawLatex(0.13, 0.80, Form("Noise gate: f >= %.1f Hz", detection.noiseGateHz));
 
     int maxLines = detection.hits.size() < 3 ? detection.hits.size() : 3;
-    for (int i = 0; i < maxLines; i++) {
+    for (int i = 0; i < maxLines; i++)
+    {
         text.DrawLatex(0.13, 0.74 - 0.05 * i,
                        Form("f = %.4f Hz  ->  period = %.2f s",
                             detection.hits[i].frequency, detection.hits[i].period));
@@ -129,9 +143,10 @@ void william_lukas(const char *rootFileName = "august.root")
 
     // Åpner ROOT-filen som August lager.
     TFile *inputFile = TFile::Open(rootFileName, "READ");
-    if (!inputFile || inputFile->IsZombie()) {
-        std::cout << "[William] Error: Could not open " << rootFileName << "\n";
-        std::cout << "[William] Run August's script first: root -l august.cpp\n";
+    if (!inputFile || inputFile->IsZombie())
+    {
+        cout << "[William] Error: Could not open " << rootFileName << "\n";
+        cout << "[William] Run August's script first: root -l august.cpp\n";
         return;
     }
 
@@ -139,9 +154,10 @@ void william_lukas(const char *rootFileName = "august.root")
     TH1D *hFreq = (TH1D *)inputFile->Get("hFreq");
 
     // Sjekker at grensesnittet mot August fortsatt stemmer.
-    if (!hTime || !hFreq) {
-        std::cout << "[William] Error: " << rootFileName
-                  << " must contain histograms named hTime and hFreq.\n";
+    if (!hTime || !hFreq)
+    {
+        cout << "[William] Error: " << rootFileName
+             << " must contain histograms named hTime and hFreq.\n";
         return;
     }
 
@@ -181,13 +197,15 @@ void william_lukas(const char *rootFileName = "august.root")
     // Tegner frekvensspekteret med litt ekstra plass over høyeste synlige topp.
     dashboard->cd(2);
     double visibleMax = hFreq->GetMaximum();
-    if (visibleMax > 0.0) {
+    if (visibleMax > 0.0)
+    {
         hFreq->SetMaximum(visibleMax * 1.25);
     }
     hFreq->Draw("HIST");
 
     TF1 *thresholdLine = nullptr;
-    if (detection.threshold > 0.0) {
+    if (detection.threshold > 0.0)
+    {
         // Tegner Lukas sin 5-sigma terskel som en rød linje.
         thresholdLine = new TF1("lukas_threshold", "[0]", 0.4, hFreq->GetXaxis()->GetXmax());
         thresholdLine->SetParameter(0, detection.threshold);
@@ -196,7 +214,8 @@ void william_lukas(const char *rootFileName = "august.root")
         thresholdLine->Draw("SAME");
     }
 
-    for (const BeaconHit &hit : detection.hits) {
+    for (const BeaconHit &hit : detection.hits)
+    {
         // Marker hver mistenkelige beacon-frekvens med en stiplet rød linje.
         TLine *marker = new TLine(hit.frequency, 0.0, hit.frequency, hit.power);
         marker->SetLineColor(kRed + 1);
@@ -211,27 +230,32 @@ void william_lukas(const char *rootFileName = "august.root")
     legend->SetBorderSize(0);
     legend->SetFillStyle(0);
     legend->AddEntry(hFreq, "Power spectrum", "l");
-    if (thresholdLine) {
+    if (thresholdLine)
+    {
         legend->AddEntry(thresholdLine, "Lukas 5-sigma threshold", "l");
     }
     legend->Draw();
 
     // Lagrer figuren slik at den kan brukes i presentasjon/rapport.
     dashboard->SaveAs("william_dashboard.png");
-    std::cout << "[William] Saved dashboard to william_dashboard.png\n";
+    cout << "[William] Saved dashboard to william_dashboard.png\n";
 
-    std::cout << "\n[William] Lukas-style detection settings:\n";
-    std::cout << "  noise gate = f >= " << detection.noiseGateHz << " Hz\n";
-    std::cout << "  dynamic 5-sigma threshold = " << detection.threshold << "\n";
+    cout << "\n[William] Lukas-style detection settings:\n";
+    cout << "  noise gate = f >= " << detection.noiseGateHz << " Hz\n";
+    cout << "  dynamic 5-sigma threshold = " << detection.threshold << "\n";
 
-    if (detection.hits.empty()) {
-        std::cout << "[William] No beacon candidates above Lukas' threshold.\n";
-    } else {
-        std::cout << "\n[William] Beacon candidates for presentation:\n";
-        for (const BeaconHit &hit : detection.hits) {
-            std::cout << "  frequency = " << hit.frequency
-                      << " Hz, period = " << hit.period
-                      << " s, power = " << hit.power << "\n";
+    if (detection.hits.empty())
+    {
+        cout << "[William] No beacon candidates above Lukas' threshold.\n";
+    }
+    else
+    {
+        cout << "\n[William] Beacon candidates for presentation:\n";
+        for (const BeaconHit &hit : detection.hits)
+        {
+            cout << "  frequency = " << hit.frequency
+                 << " Hz, period = " << hit.period
+                 << " s, power = " << hit.power << "\n";
         }
     }
 }
